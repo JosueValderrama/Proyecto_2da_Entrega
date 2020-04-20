@@ -1,0 +1,197 @@
+import json
+import math
+
+with open("troncales.json") as contenido:
+	tronc=json.load(contenido)
+
+with open("upz.json", encoding="utf8") as cont:
+	upzs=json.load(cont)
+
+
+def imprimirlista_troncal():
+	for trocals in tronc:
+		print(trocals["idtroncal"],".",trocals["nombretroncal"])
+		print("")
+
+def imprimir_ordenado():
+	print(json.dumps(tronc,indent=4))
+
+
+class Nodo:
+	def __init__(self,nbestacion="", latitud= 0, longitud= 0, tipo="",alimentadores="",upz=""):
+		self.nbestacion = nbestacion
+		self.latitud = latitud
+		self.longitud = longitud
+		self.tipo = tipo
+		self.alimentadores=alimentadores
+		self.upz=upz
+		self.pSig = None
+		self.pAnt = None
+		
+	def __str__(self):
+		return "%s %s %s %s %s %s"%(self.nbestacion, self.latitud, self.longitud, self.tipo, self.alimentadores, self.upz)
+		
+class ListaDoble:
+
+	def __init__(self):
+		self.primero = None
+		self.ultimo = None
+		self.size = 0
+		
+	def agregar(self,nbestacion,latitud,longitud,tipo,alimentadores,upz):
+		temporal = Nodo(nbestacion,latitud,longitud,tipo,alimentadores,upz)
+		if self.primero==None:
+			self.primero = temporal
+			self.ultimo = temporal
+		else:
+			temporal.pSig = self.primero
+			self.primero.pAnt = temporal
+			self.primero = temporal
+		self.size += 1
+
+
+	def coor_iniciolat(self,estacion1):
+		if self.primero is None:
+			print("No hay elementos")
+			return		
+		else:
+			n=self.primero
+			while n != None:
+				if n.nbestacion != estacion1:
+					n=n.pSig
+				else:
+					return n.latitud
+	def coor_iniciolong(self, estacion1):
+		if self.primero is None:
+			print("No hay elementos")
+			return		
+		else:
+			n=self.primero
+			while n != None:
+				if n.nbestacion != estacion1:
+					n=n.pSig
+				else:
+					return n.longitud
+
+	def coor_finlat(self,estacion1):
+		if self.primero is None:
+			print("No hay elementos")
+			return		
+		else:
+			n=self.primero
+			while n != None:
+				if n.nbestacion != estacion1:
+					n=n.pSig
+				else:
+					return n.latitud
+
+	def coor_finlong(self,estacion1):
+		if self.primero is None:
+			print("No hay elementos")
+			return		
+		else:
+			n=self.primero
+			while n != None:
+				if n.nbestacion != estacion1:
+					n=n.pSig
+				else:
+					return n.longitud
+
+	def enviar(self,lat1,long1,lat2,long2):
+		if self.primero is None:
+			print("No hay elementos")
+			return		
+		else:
+			n=self.primero
+			while n != None:
+				if n.latitud == lat1:	
+					if n.pSig.latitud != lat2:				
+						haversine(n.latitud,n.longitud,lat2,long2)
+						n=n.pSig
+					else:				
+						haversine(n.latitud,n.longitud,lat2,long2)
+						n=n.pAnt
+						return
+				else:
+					n=n.pSig	
+			return
+
+
+	def imprimir_estaciones(self):
+		print("-------------------------")
+		if self.primero is None:
+			print("lista Vacia")
+			return
+		else:
+			aux = self.primero
+			while aux!= None:
+				print(aux.__str__())
+				aux= aux.pSig
+
+
+def haversine(lat1,long1,lat2,long2):
+	R = 6373.0
+	latt1=math.radians(lat1)
+	longg1=math.radians(long1)
+	latt2=math.radians(lat2)
+	longg2=math.radians(long2)
+	dlon = longg2 - longg1
+	dlat = latt2 - latt1
+	a = math.sin(dlat / 2)**2 + math.cos(latt1) * math.cos(latt2) * math.sin(dlon / 2)**2
+	c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+	distancia = R * c
+	suma_distancias(distancia)
+
+
+def suma_distancias(distancia):
+	aux=+distancia
+	print(aux)
+
+def funcion_hash(clave):
+    return clave % len(tabla_hash)
+
+def insertar(tabla_hash, clave, contnido):
+	hash_index = funcion_hash(clave)
+	tabla_hash[hash_index] = contnido 
+
+	
+def buscar_upz(tabla_hash, clave):
+	return tabla_hash[funcion_hash(clave)]
+
+
+if __name__ == '__main__':
+	ld=ListaDoble()
+	#HASH DE UPZ
+	tabla_hash = [[]] * 117
+	
+	for leerupz in upzs:			 
+		insertar(tabla_hash, leerupz["Numero"], (leerupz["Nombre"],leerupz["Localidad"],leerupz["habitantes"],leerupz["latitud"],leerupz["longitud"]))
+	#print(tabla_hash)
+	print("BUSCAR ELEMENTO DE LAS UPZ POR SU NUMERO")
+	#num1=int(input("Ingrese clave(MAX 117): "))
+	num1 = 108
+	print("CLave:",num1,buscar_upz(tabla_hash, num1))
+
+	#CARGAR ESTACIONES DE TODAS LAS TRONCALES
+	for trocals in tronc:
+			for estac in trocals["estaciones"]:
+				nbestacion=estac["nombre"]
+				latitud= estac["latitud"]
+				longitud= estac["longitud"]
+				tipo=estac["tipo"]
+				alimentadores=estac["alimentadores"]
+				upz= estac["upz"]
+				ld.agregar(nbestacion, latitud, longitud, tipo, alimentadores, upz)	
+	#imprimirlista_troncal()
+	#ld.imprimir_estaciones()
+	print("-----------------------------")
+	estacion1="banderas"
+	estacion2="transversal86"
+	print("Distancia entre:",estacion1," y:",estacion2)
+	n1=ld.coor_iniciolat(estacion1)
+	n2=ld.coor_iniciolong(estacion1)
+	n3=ld.coor_finlat(estacion2)
+	n4=ld.coor_finlong(estacion2)
+	ld.enviar(n1,n2,n3,n4)
+	#suma_distancias()
+
